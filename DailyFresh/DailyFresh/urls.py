@@ -20,5 +20,8 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^apps/', include(('apps.urls', 'apps'), namespace='apps')),
-    url(r'^user/', include(('apps.url')))
+    url(r'^user/', include(('apps.user.urls', 'user'), namespace='user')),
+    url(r'^cart/', include(('apps.cart.urls', 'cart'), namespace='cart')),
+    url(r'^order/', include(('apps.order.urls', 'order'), namespace='order')),
+    url(r'', include(('apps.goods.urls', 'goods'), namespace='goods')),
 ]

@@ -161,3 +161,5 @@ TINYMCE_DEFAULT_CONFIG = {
     'width': 600,
     'height': 800,
 }
+# 对外发送邮件的邮箱地址
+EMAIL_FROM = '2501160661@qq.com'
