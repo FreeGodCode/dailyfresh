@@ -1,17 +1,10 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from db.base_model import BaseModel
 
-class BaseMoled(models.Model):
-    created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    update_time = models.DateTimeField(auto_now=True, verbose_name='更新时间')
-    is_delete = models.BooleanField(default=False, verbose_name='是否删除')
 
-    class Meta:
-        """指定为抽象模型类"""
-        abstract = True
-
-class User(BaseMoled, AbstractUser):
+class User(BaseModel, AbstractUser):
     """用户模型类"""
 
     class Meta:
@@ -41,7 +34,8 @@ class AddressManager(models.Manager):
             address = None
         return address
 
-class Address(BaseMoled):
+
+class Address(BaseModel):
     user = models.ForeignKey('User', verbose_name='所属账户', on_delete=models.CASCADE)
     receiver = models.CharField(max_length=20, verbose_name='收件人')
     addr = models.CharField(max_length=256, verbose_name='收件地址')
