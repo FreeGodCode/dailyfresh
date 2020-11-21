@@ -7,7 +7,8 @@ from DailyFresh.apps.user import views
 #     url(r'^forget/', views.forget_password, name='forget_password'),
 #     url(r'^reset/', views.reset_password, name='reset_password'),
 # ]
-from DailyFresh.apps.user.views import RegisterView
+from DailyFresh.apps.user.views import RegisterView, UserInfoView, ActiveView, LoginView, LogoutView, UserOrderView, \
+    AddressView
 
 urlpatterns = [
     # 用户中心

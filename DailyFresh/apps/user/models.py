@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from db.base_model import BaseModel
+from DailyFresh.db.base_model import BaseModel
 
 
 class User(BaseModel, AbstractUser):

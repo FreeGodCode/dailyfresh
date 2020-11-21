@@ -11,7 +11,7 @@ from django_redis import get_redis_connection
 from DailyFresh.DailyFresh import settings
 from DailyFresh.apps.user.models import User, Address
 
-from apps.order.models import OrderInfo, OrderGoods
+from DailyFresh.apps.order.models import OrderInfo, OrderGoods
 
 
 class RegisterView(View):
@@ -77,7 +77,7 @@ class RegisterView(View):
         # send_mail(subject='邮件标题', message='邮件正文', from_email='发件人', recipient_list='收件人列表')
         # send_mail(subject, message, sender, receiver, html_message)
         # 定义异步执行任务
-        tasks.send_register_active_email.delay(email, username, token) #from celery_tasks import task
+        tasks.send_register_active_email.delay(email, username, token) #from celery_tasks import tasks
 
         # 返回跳转到首页
         return redirect(reverse('goods: index'))
