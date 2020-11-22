@@ -451,6 +451,54 @@ class OrderCheckView(LoginRequiredMixin, View):
         except OrderInfo.DoesNotExist:
             return HttpResponse("订单信息错误")
 
+        # 业务处理:调用python SDK中的交易查询接口
+        # 初始化
+        ali_pay = AliPay(
+            appid=settings.ALIPAY_APP_ID,
+            app_notify_url=settings.ALIPAY_APP_NOTIFY_URL,
+            app_private_key_path=settings.APP_PRIVATE_KEY_PATH,
+            alipay_public_key_path=settings.APP_PUBLIC_KEY_PATH,
+            sign_type='RSA2',
+            debug=settings.ALIPAY_DEBUG,
+        )
+        """
+        调用python SDK中api_alipay_trade_query参数说明:
+        {
+            'trade_no': '', #支付宝交易号
+            'code': '10000', #网关返回码
+            'invoice_amount': '20.00',
+            'open_id': '',
+            'fund_bill_list': [
+                {
+                    'amount': '20.00',
+                    'fund_chanel': 'ALIPAYACCOUNT'
+                }
+            ],
+            'buyer_login_id': '',
+            'send_pay_date': '',
+            'receipt_amount': '20.00',
+            'out_trade_no': '',
+            'buyer_pay_amount': '',
+            'buyer_user_id': '',
+            'msg': 'Success',
+            'point_amount': '0.00',
+            'trade_status': 'TRADE_SUCCESS', #支付状态
+            'total_amount': '20.00',
+        }
+        """
+
+        # 调用python SDK中api_alipay_trade_query查询结果
+        response = ali_pay.api_alipay_trande_query(out_trade_no=order_id)
+        # 获取支付宝网关的返回码
+        res_code = response.get('code')
+        if res_code == '10000' and response.get('trade_status') == 'TRADE_SUCCESS':
+            order.order_status = 4 #待评价
+            order.trade_no = response.get('trade_no')
+            order.save()
+            return render(request, 'pay_result.html', {'pay_result': '支付成功'})
+        else:
+            return render(request, 'pay_result.html', {'pay_result': '支付失败'})
+
 
 # 订单评论
 # url地址: /order/comment/订单id
@@ -458,6 +506,7 @@ class OrderCommentView(LoginRequiredMixin, View):
     """订单评论"""
     # pass
     def get(self, request, order_id):
+        """展示评论页面"""
         user = request.user
         if not order_id:
             return redirect(reverse('user: order', kwargs={'page: 1'}))
@@ -467,12 +516,17 @@ class OrderCommentView(LoginRequiredMixin, View):
         except OrderInfo.DoesNotExist:
             return redirect(reverse('user: order', kwargs={'page': 1}))
 
+        # 根据订单的状态获取订单的状态标题
         order.status_name = OrderInfo.ORDER_STATUS[order.order_status]
 
+        # 获取订单的商品信息
         order_skus = OrderInfo.objects.filter(order_id=order_id)
         for order_sku in order_skus:
             amount = order_sku.count * order_sku.price
+            # 动态给order_sku增加属性amount,保存商品小计
             order_sku.amount = amount
+
+        # 动态给order增加属性order_skus,保存订单商品信息
         order.order_skus = order_skus
         return render(request, 'order_comment.html', {'order': order})
 
@@ -481,3 +535,27 @@ class OrderCommentView(LoginRequiredMixin, View):
         user = request.user
         if not order_id:
             return redirect(reverse('user: order', kwargs={'page': 1}))
+
+        try:
+            order = OrderInfo.objects.get(order_id=order_id, user=user)
+        except OrderInfo.DoesNotExist:
+            return redirect(reverse('user: order', kwargs={'page': 1}))
+
+        # 获取评论条数
+        total_count = request.POST.get('total_count')
+        total_count = int(total_count)
+
+        # 循环获取订单中商品的评论内容
+        for i in range(1, total_count + 1):
+            sku_id = request.POST.get('sku_%d' % i, '')
+            content = request.POST.get('content_%d' % i, '')
+            try:
+                order_goods = OrderGoods.objects.get(order=order, sku_id=sku_id)
+            except OrderGoods.DoesNotExist:
+                continue
+            order_goods.content = content
+            order_goods.save()
+
+        order.order_status = 5 #完成
+        order.save()
+        return redirect(reverse('user: order', kwargs={'page': 1}))
