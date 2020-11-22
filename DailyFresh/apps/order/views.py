@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
@@ -11,6 +11,7 @@ from django_redis import get_redis_connection
 from DailyFresh.apps.goods.models import GoodsSKU
 from DailyFresh.apps.order.models import OrderInfo, OrderGoods
 from DailyFresh.apps.user.models import Address
+from DailyFresh.apps.user.views import LoginRequiredMixin
 
 
 class OrderPlaceView(View):
@@ -344,6 +345,7 @@ class OrderCommitView(View):
                     new_stock = origin_stock - int(count)
                     new_sales = sku.sales + int(count)
 
+                    # update df_goods_sku set stock="new_stock", sales='new_sales' where id=sku_id and stock=origin_stock;
                     # update方法返回更新的行数
                     res = GoodsSKU.objects.filter(id=sku_id, stock=origin_stock).update(stock=new_stock, sales=new_sales)
                     if res == 0:
@@ -381,16 +383,101 @@ class OrderCommitView(View):
         return JsonResponse({'res': 5, 'error_msg': '订单创建成功'})
 
 
+# 订单支付
+# 前端传递的参数:订单id(order_id)
+# url地址:/order/pay/
 class OrderPayView(View):
     """订单支付"""
-    pass
+    # pass
+    def post(self, request):
+        # 登录验证
+        user = request.user
+        if not user.is_authenticated():
+            return JsonResponse({'res': 0, 'error_msg': '用户未登录'})
+
+        order_id = request.POST.get('order_id', '')
+        if not all([order_id]):
+            return JsonResponse({'res': 1, 'error_msg': '参数缺失'})
+
+        try:
+            order = OrderInfo.objects.get(
+                order_id=order_id,
+                user=user,
+                order_status=1,#订单状态为待支付
+                pay_method=3,#支付方式为支付宝支付
+            )
+        except OrderInfo.DoesNotExist:
+            return JsonResponse({'res': 2, 'error_msg': '无效订单id'})
+
+        # 业务处理:调用支付宝python SDK中的api_alipay_trade_page_pay函数
+        ali_pay = AliPay(
+            appid=settings.ALIPAY_APP_ID, #应用APPID
+            app_notify_url=settings.ALIPAY_APP_NOTIFY_URL, #默认回调url
+            app_private_key_path=settings.APP_PRIVATE_KEY_PATH, #应用私钥文件路径
+            alipay_public_key_path=settings.ALIPAY_PUBLIC_KEY_PATH, #支付宝的公钥文件,验证支付宝回传消息使用,不要使用自己的公钥
+            sign_type='RSA2', #RSA或者RSA2
+            debug = settings.ALIPAY_DEBUG, #默认False, 线上环境,True代表沙箱环境
+        )
+
+        # 电脑网站支付,需要跳转https://openapi.alipay.com/gateway.do? + order_string
+        total_pay = order.total_price + order.transport_price
+        order_string = ali_pay.api_alipay_trande_page_apy(
+            out_trade_on=order_id, #订单id
+            total_amount=str(total_pay), #订单实付款
+            subject="dailyfresh%s" % order_id, #订单标题
+            return_url='http://127.0.0.1:8000/order/check',
+            notify_url=None #不填默认为notify_url
+        )
+
+        pay_url = settings.ALIPAY_GATEWAY_URL + order_string
+        return JsonResponse({'res': 3, 'pay_url': pay_url, 'error_msg': 'OK'})
 
 
-class OrderCheckView(View):
+# url地址:/order/check/
+class OrderCheckView(LoginRequiredMixin, View):
     """订单签收"""
-    pass
+    # pass
+    def get(self, request):
+        """订单支付结果查询"""
+        user = request.user
+        order_id = request.GET.get('out_trade_no')
+        try:
+            order = OrderInfo.objects.get(
+                order_id=order_id,
+                user=user,
+                order_status=1,
+                pay_method=3,
+            )
+        except OrderInfo.DoesNotExist:
+            return HttpResponse("订单信息错误")
 
 
-class OrderCommentView(View):
+# 订单评论
+# url地址: /order/comment/订单id
+class OrderCommentView(LoginRequiredMixin, View):
     """订单评论"""
-    pass
+    # pass
+    def get(self, request, order_id):
+        user = request.user
+        if not order_id:
+            return redirect(reverse('user: order', kwargs={'page: 1'}))
+
+        try:
+            order = OrderInfo.objects.get(order_id=order_id, user=user)
+        except OrderInfo.DoesNotExist:
+            return redirect(reverse('user: order', kwargs={'page': 1}))
+
+        order.status_name = OrderInfo.ORDER_STATUS[order.order_status]
+
+        order_skus = OrderInfo.objects.filter(order_id=order_id)
+        for order_sku in order_skus:
+            amount = order_sku.count * order_sku.price
+            order_sku.amount = amount
+        order.order_skus = order_skus
+        return render(request, 'order_comment.html', {'order': order})
+
+    def post(self, request, order_id):
+        """处理评论内容"""
+        user = request.user
+        if not order_id:
+            return redirect(reverse('user: order', kwargs={'page': 1}))
