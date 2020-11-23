@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.views.generic.base import View
 from django_redis import get_redis_connection
 
-from DailyFresh.apps.cart.models import GoodsSKU
+from DailyFresh.apps.goods.models import GoodsSKU
 
 # get /cart/
 class CartInfoView(View):

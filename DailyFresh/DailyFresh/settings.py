@@ -161,5 +161,49 @@ TINYMCE_DEFAULT_CONFIG = {
     'width': 600,
     'height': 800,
 }
-# 对外发送邮件的邮箱地址
-EMAIL_FROM = '2501160661@qq.com'
+
+
+# 搜索haystack配置
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.whoosh_cn_backend.WhooshEngine',
+        'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+    }
+}
+
+
+
+
+# Django的session存储设置
+SESSION_ENGINE = 'django.contrib.session.backends.cache'
+
+# 设置session信息存储在CACHE配置项default对应的redis中
+SESSION_CACHE_ALIAS =  'default'
+
+# 指定登录页面对应的url地址
+LOGIN_URL = '/user/login/'
+
+
+# 邮箱配置
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.163.com'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = '' #stmp授权码
+EMAIL_FROM = '' #发件人邮箱
+
+
+# 支付宝配置
+ALIPAY_APP_ID = '沙箱app id'
+# 支付包网站回调url地址
+ALIPAY_APP_NOTIFY_URL = None
+# 支付宝同步return_url地址
+ALIPAY_APP_RETURN_URL = ''
+# 网站私钥文件路径
+APP_PRIVATE_KEY_PATH = os.path.join(BASE_DIR, 'apps/order/app_private_key.pem')
+# 支付宝公钥文件路径
+ALIPAY_PUBLIC_KEY_PATH = os.path.join(BASE_DIR, 'apps/order/alipay_public_key.pem')
+# 支付宝的开发模式
+ALIPAY_DEBUG = True
+# 支付宝沙箱支付网关地址
+ALIPAY_GATEWAY_URL = 'https://openapi.alipaydev.com/gateway.do?'

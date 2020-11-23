@@ -1,7 +1,9 @@
 from celery.task import task
 from django.core.mail import send_mail
 
-from DailyFresh import settings
+# from DailyFresh import settings
+from DailyFresh.DailyFresh import settings
+
 
 @task
 def send_register_active_email(to_email, username, token):

@@ -9,11 +9,16 @@ from django.views.generic.base import View
 from django_redis import get_redis_connection
 
 from DailyFresh.DailyFresh import settings
+from DailyFresh.apps.goods.models import GoodsSKU
 from DailyFresh.apps.user.models import User, Address
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import SignatureExpired
 
 from DailyFresh.apps.order.models import OrderInfo, OrderGoods
+from DailyFresh.celery_tasks import tasks
 
 
+# /user/register/
 class RegisterView(View):
     """注册"""
     def get(self, request):
@@ -55,7 +60,8 @@ class RegisterView(View):
         # 注册->邮件激活->邮件包含激活链接
         # 激活链接: /user/active/加密后的token
         # 对用户身份信息进行加密,生成激活token信息
-        serializer = Serializer(settings.SECRET_KEY, 3600 * 7) #from itsdangerous import TimedJSONWebSignatureSerizlizer as Serializer
+        # from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+        serializer = Serializer(settings.SECRET_KEY, 3600 * 7)
         info = {'confirm': user.id}
         token = serializer.dumps(info)
 
@@ -83,6 +89,8 @@ class RegisterView(View):
         return redirect(reverse('goods: index'))
 
 
+# from itsdangerous import SignatureExpired
+# /user/active/加密token
 class ActiveView(View):
     """激活"""
     def get(self, request, token):
@@ -98,12 +106,14 @@ class ActiveView(View):
             user.save()
             # 跳转页面
             return redirect(reverse('user: login'))
+
         except SignatureExpired as e:
             # 激活链接失效
             # 实际开发中,返回页面,再次点击链接发送激活邮件
             return HttpResponse('激活链接已失效')
 
 
+# /user/login/
 class LoginView(View):
     """登录"""
 
@@ -156,6 +166,7 @@ class LoginView(View):
             return render(request, 'login.html', {'error_msg': '用户名或者密码错误'})
 
 
+# /user/logout/
 class LogoutView(View):
     """退出"""
 
@@ -177,14 +188,24 @@ class LoginRequiredView(View):
         return login_required(view)
 
 
+# class LoginRequiredMixin(object):
+#     @classmethod
+#     def as_view(cls, **initkwargs ):
+#         # view = super(LoginRequiredMixin, self).as_view(**initkwargs)
+#         view = super().as_view(**initkwargs)
+#         return login_required(view)
+
+
 class LoginRequiredMixin(object):
+    """提供要求用户登录的功能"""
     @classmethod
-    def as_view(cls, **initkwargs ):
-        # view = super(LoginRequiredMixin, self).as_view(**initkwargs)
-        view = super().as_view(**initkwargs)
+    def as_view(cls, *args, **kwargs ):
+        view = super(LoginRequiredMixin, cls).as_view(*args, **kwargs)
+        # view = super().as_view(**initkwargs)
         return login_required(view)
 
 
+# /user/
 class UserInfoView(LoginRequiredMixin, View):
     """用户中心-信息页"""
 
@@ -221,10 +242,12 @@ class UserInfoView(LoginRequiredMixin, View):
         }
         return render(request, 'user_center_info.html', data)
 
+
+# url地址: /user/order/
 class UserOrderView(LoginRequiredMixin, View):
     """用户中心-订单页"""
 
-    def get(self, request):
+    def get(self, request, page):
         """显示页面"""
         user = request.user
         # 查询订单情况,若有订单则为1
@@ -283,6 +306,9 @@ class UserOrderView(LoginRequiredMixin, View):
         return render(request, 'user_center_order.html', context)
 
 
+# /user/address/
+# class AddressView(View):
+# class AddressView(LoginRequiredMixin):
 class AddressView(LoginRequiredMixin, View):
     """用户中心-地址页"""
 

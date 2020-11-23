@@ -11,7 +11,7 @@ class BaseModelAdmin(admin.ModelAdmin):
         super(BaseModelAdmin, self).save_model(request, obj, form, change)
 
         # 附加操作,发出生成静态首页的任务
-        # from celery_tasks.tesks import generate_static_index_html
+        from DailyFresh.celery_tasks.tasks import generate_static_index_html
         generate_static_index_html.delay()
 
         # 清除首页缓存
@@ -22,7 +22,7 @@ class BaseModelAdmin(admin.ModelAdmin):
         # 调用ModelAdmin中的delete_model来实现删除操作
         super(BaseModelAdmin, self).delete_model(request, obj)
 
-        # from celery_tasks.tesks import generate_static_index_html
+        from DailyFresh.celery_tasks.tasks import generate_static_index_html
         generate_static_index_html.delay()
 
         cache.delete('index_page_data')

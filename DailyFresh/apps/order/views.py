@@ -8,6 +8,7 @@ from django.views import View
 # url地址: /order/place/
 from django_redis import get_redis_connection
 
+from DailyFresh.DailyFresh import settings
 from DailyFresh.apps.goods.models import GoodsSKU
 from DailyFresh.apps.order.models import OrderInfo, OrderGoods
 from DailyFresh.apps.user.models import Address
@@ -457,7 +458,7 @@ class OrderCheckView(LoginRequiredMixin, View):
             appid=settings.ALIPAY_APP_ID,
             app_notify_url=settings.ALIPAY_APP_NOTIFY_URL,
             app_private_key_path=settings.APP_PRIVATE_KEY_PATH,
-            alipay_public_key_path=settings.APP_PUBLIC_KEY_PATH,
+            alipay_public_key_path=settings.ALIPAY_PUBLIC_KEY_PATH,
             sign_type='RSA2',
             debug=settings.ALIPAY_DEBUG,
         )
