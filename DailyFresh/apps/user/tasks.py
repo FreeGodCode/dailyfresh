@@ -18,7 +18,7 @@ def send_register_active_email(to_email, username, token):
     <h1>%s, 欢迎您注册每日生鲜的会员</h1>
     请点击下方链接激活您的账户<br/>
     <a href="http://127.0.0.1:8000/user/active/%s">http://127.0.0.1:8000/user/active/%s</a>
-    """%(username, token, token)
+    """ % (username, token, token)
 
     # 发送激活邮件
     send_mail(subject, message, sender, receiver, html_message=html_message)
