@@ -19,6 +19,8 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('tinymce/', include('tinymce.urls')),  # 富文本编辑器
+    path('search/', include('haystack.urls')),  # 全文检索框架
     url(r'^apps/', include(('apps.urls', 'apps'), namespace='apps')),
     url(r'^user/', include(('apps.user.urls', 'user'), namespace='user')),
     url(r'^cart/', include(('apps.cart.urls', 'cart'), namespace='cart')),

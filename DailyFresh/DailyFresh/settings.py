@@ -39,8 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'apps',
-    'tinymce',
-
+    'tinymce',  # 富文本编辑器
+    'haystack',  # 全文检索框架
 ]
 
 MIDDLEWARE = [
@@ -89,7 +89,7 @@ WSGI_APPLICATION = 'DailyFresh.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'apps',
+        'NAME': 'db_daily_fresh',
         'USER': 'root',
         'PASSWORD': '123456',
         'HOST': 'localhost',
@@ -143,6 +143,8 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+# 指定收集静态文件的路径
+STATIC_ROOT = 'var/dailyfresh/static'
 
 # 配置缓存
 CACHES = {
@@ -156,25 +158,6 @@ CACHES = {
     }
 }
 
-# 富文本编辑器配置
-TINYMCE_DEFAULT_CONFIG = {
-    'theme': 'advanced',
-    'width': 600,
-    'height': 800,
-}
-
-
-# 搜索haystack配置
-HAYSTACK_CONNECTIONS = {
-    'default': {
-        'ENGINE': 'haystack.backends.whoosh_cn_backend.WhooshEngine',
-        'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
-    }
-}
-
-
-
-
 # Django的session存储设置
 SESSION_ENGINE = 'django.contrib.session.backends.cache'
 
@@ -184,12 +167,40 @@ SESSION_CACHE_ALIAS =  'default'
 # 指定登录页面对应的url地址
 LOGIN_URL = '/user/login/'
 
+# 富文本编辑器配置
+TINYMCE_DEFAULT_CONFIG = {
+    'theme': 'advanced',
+    'width': 600,
+    'height': 800,
+}
+
+# 搜索haystack配置
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        # 使用whoosh引擎
+        # 'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'ENGINE': 'haystack.backends.whoosh_cn_backend.WhooshEngine',
+        # 索引文件路径
+        'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+    }
+}
+# 当修改数据时，自动生成索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+# 指定搜索结果每页显示10条信息
+HAYSTACK_SEARCH_RESULTS_PER_PAGE = 10
+
+# 设置Django的文件存储类
+DEFAULT_FILE_STORAGE = 'utils.fdfs.storage.FDFSStorage'
+# 设置fdfs使用的client.conf文件路径
+FDFS_CLIENT_CONF = './utils/fdfs/client.conf'
+# 设置fdfs存储在服务器Nginx上的IP和端口号
+FDFS_URL = 'http://127.0.0.1:8000/'
 
 # 邮箱配置
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.163.com'
 EMAIL_PORT = 25
-EMAIL_HOST_USER = ''
+EMAIL_HOST_USER = 'thechosenone_ty@163.com'
 EMAIL_HOST_PASSWORD = '' #stmp授权码
 EMAIL_FROM = '' #发件人邮箱
 
