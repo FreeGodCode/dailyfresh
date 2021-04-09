@@ -5,6 +5,7 @@ from django_redis import get_redis_connection
 
 from DailyFresh.apps.goods.models import GoodsSKU
 
+
 # get /cart/
 class CartInfoView(View):
     """购物车页面显示"""
@@ -16,7 +17,7 @@ class CartInfoView(View):
         # 从redis中获取用户的购物车记录信息
         conn = get_redis_connection('default')
         # 拼接key
-        cart_key = 'cart_%d'% user.id
+        cart_key = 'cart_%d' % user.id
         # hgetall()返回一个字典,字典键是商品id,值是添加的数目
         cart_dict = conn.hgetall(cart_key)
 
@@ -164,18 +165,3 @@ class CartDeleteView(View):
         conn.hdel(cart_key, sku_id)
 
         return JsonResponse({'res': 3, 'error_msg': '删除购物车记录成功'})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -8,10 +8,12 @@ from django.template import loader
 from DailyFresh.DailyFresh import settings
 from DailyFresh.apps.goods.models import GoodsType, IndexGoodsBanner, IndexPromotionBanner, IndexTypeGoodsBanner
 from DailyFresh.celery_tasks.celery import app as app
+
 # 设置django配置依赖的环境变量
 sys.path.insert(0, './')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DailyFresh.settings')
 django.setup()
+
 
 # 定义任务函数
 @app.task
@@ -26,6 +28,7 @@ def send_register_active_email(to_email, username, token):
     # 发送激活邮件
     # send_mail(subject=邮件标题, message=邮件正文, from_email=发件人, recipient_list=收件人列表)
     send_mail(subject, message, sender, receiver, html_message=html_message)
+
 
 @app.task
 def generate_static_index_html():

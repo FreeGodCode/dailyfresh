@@ -6,8 +6,9 @@ from django.conf.urls import url
 #     url(r'^forget/', views.forget_password, name='forget_password'),
 #     url(r'^reset/', views.reset_password, name='reset_password'),
 # ]
-from DailyFresh.DailyFresh.apps.user.views import RegisterView, UserInfoView, ActiveView, LoginView, LogoutView, UserOrderView, AddressView
 
+from DailyFresh.apps.user.views import UserInfoView, RegisterView, ActiveView, LoginView, LogoutView, UserOrderView, \
+    AddressView
 
 urlpatterns = [
     # 用户中心

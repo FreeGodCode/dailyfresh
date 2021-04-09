@@ -3,9 +3,6 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.generic.base import View
-
-
-# /
 from django_redis import get_redis_connection
 
 from DailyFresh.apps.goods.models import GoodsType, IndexGoodsBanner, IndexPromotionBanner, IndexTypeGoodsBanner, \
@@ -170,7 +167,7 @@ class ListView(View):
         num_pages = paginator.num_pages
         if num_pages < 5:
             # 1-num_pages
-            pages = range(1, num_pages  + 1)
+            pages = range(1, num_pages + 1)
         elif page <= 3:
             pages = range(1, 6)
         elif num_pages - page <= 2:
